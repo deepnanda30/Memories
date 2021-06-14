@@ -4,19 +4,22 @@ import Filebase from "react-file-base64";
 import { useSelector, useDispatch } from "react-redux";
 import { createPost, updatePost } from "../../actions/posts";
 import useStyles from "./style";
+import { useHistory } from "react-router-dom";
+import ChipInput from "material-ui-chip-input";
 
 const Form = ({ currentId, setCurrentId }) => {
   const [postData, setPostData] = useState({
     title: "",
     message: "",
-    tags: "",
+    tags: [],
     selectedFile: "",
   });
   const post = useSelector((state) =>
-    currentId ? state.posts.find((post) => post._id === currentId) : null
+    currentId ? state.posts.posts.find((post) => post._id === currentId) : null
   );
   const classes = useStyles();
   const dispatch = useDispatch();
+  const history = useHistory();
   const user = JSON.parse(localStorage.getItem("profile"));
 
   useEffect(() => {
@@ -32,7 +35,7 @@ const Form = ({ currentId, setCurrentId }) => {
       );
       //console.log('Dispatched')
     } else {
-      dispatch(createPost({ ...postData, name: user?.result?.name }));
+      dispatch(createPost({ ...postData, name: user?.result?.name }, history));
     }
     clear();
   };
@@ -46,17 +49,27 @@ const Form = ({ currentId, setCurrentId }) => {
     });
   };
   //console.log(postData);
-  if(!user?.result?.name){
-    return(
-      <Paper className={classes.paper}>
+  if (!user?.result?.name) {
+    return (
+      <Paper className={classes.paper} elevation={6}>
         <Typography variant="h6" align="center">
           Please sign in to create your own memories!!
         </Typography>
       </Paper>
-    )
+    );
   }
+  const handleAddChip = (tag) => {
+    setPostData({ ...postData, tags: [...postData.tags, tag] });
+  };
+
+  const handleDeleteChip = (chipToDelete) => {
+    setPostData({
+      ...postData,
+      tags: postData.tags.filter((tag) => tag !== chipToDelete),
+    });
+  };
   return (
-    <Paper className={classes.paper}>
+    <Paper className={classes.paper} elevation={6}>
       <form
         autoComplete="off"
         noValidate
@@ -84,16 +97,17 @@ const Form = ({ currentId, setCurrentId }) => {
             setPostData({ ...postData, message: e.target.value })
           }
         />
-        <TextField
-          name="tags"
-          variant="outlined"
-          label="Tags"
-          fullWidth
-          value={postData.tags}
-          onChange={(e) =>
-            setPostData({ ...postData, tags: e.target.value.split(",") })
-          }
-        />
+        <div style={{ padding: "5px 0", width: "94%" }}>
+          <ChipInput
+            name="tags"
+            variant="outlined"
+            label="Tags"
+            fullWidth
+            value={postData.tags}
+            onAdd={(chip) => handleAddChip(chip)}
+            onDelete={(chip) => handleDeleteChip(chip)}
+          />
+        </div>
         <div className={classes.fileInput}>
           <Filebase
             type="file"
